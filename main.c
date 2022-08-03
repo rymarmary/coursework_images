@@ -104,12 +104,42 @@ void printFileInfo(image *img) {
     printf("importantColorCount:\t%x (%u)\n", img->bmih.importantColorCount, img->bmih.importantColorCount);
 }
 
+int ifCorrect(image* img, char* name){
+    unsigned long len = strlen(name);
+    if (name[len - 1] != 'p' || name[len - 2] != 'm' || name[len - 3] != 'b' || name[len - 4] != '.') {
+        printf("Error: invalid file name, it must end with '.bmp'\n");
+        return 1;
+    }
+    FILE* bmpfile = fopen(name, "rb");
+    *img = readImage(name);
+    if (!bmpfile){
+        printf("There is not such file in the directory.\n");
+        return 1;
+    }
+    if (img->bmih.compression != 0){
+        printf("File is compressed, it shouldn't be.\n");
+        return 1;
+    }
+    if (img->bmih.bitsPerPixel != 24){
+        printf("File with such depth of encoding is not supported, it should be 24 bits per pixel.\n");
+        return 1;
+    }
+    if (img->bmih.colorsInColorTable != 0 || img->bmih.importantColorCount != 0){
+        printf("File shouldn't use color table.\n");
+        return 1;
+    }
+    return 0;
+}
+
 // Command Line Interface
 
 void help_output() {
+    // TODO: дописать помощь по программе
     char info[] = "Hey, currently u're working with BMP Photo Editor 'Time for Edit'.\n"
                   "Here u can see a description of this program: it supports files of only 3rd version; "
-                  "encoding depth is 24 bits per color; file shouldn't be compressed.\n";
+                  "encoding depth is 24 bits per color; file shouldn't be compressed.\n"
+                  "Functions:\n1). -i -- if u wanna see an information about bmp-file\n"
+                  "2). -h -- if u need to find out what this program can do (btw, u're reading it now)\n";
     puts(info);
 }
 
@@ -124,6 +154,12 @@ int main(int argc, char *argv[]) {
     opt = getopt_long(argc, argv, opts, longOpts, &longOpt);
     image img;
 
+    if (argc<2){
+        printf("Wrong input, please enter keys to use the program.\n");
+        help_output();
+        return 0;
+    }
+
     char inputFile[length_file];
     char outputFile[length_file];
 
@@ -136,11 +172,15 @@ int main(int argc, char *argv[]) {
             case 'i':{
                 sscanf(optarg, "%s", inputFile);
                 img = readImage(inputFile);
+                if (ifCorrect(&img, inputFile) != 0){
+                    printf("Incorrect input file, please try another.\n");
+                    return 1;
+                }
                 printFileInfo(&img);
                 return 0;
             }
             default:{
-                printf("Wrong key");
+                printf("Wrong key\n");
                 return 1;
             }
         }
