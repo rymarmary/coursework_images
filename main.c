@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define length_file 256
+
 #pragma pack(push, 1)
 typedef struct {
     unsigned short signature;   // 0x4d42 | 0x4349 | 0x5450
@@ -53,8 +55,8 @@ image readImage(char *name) {
 
     img.rgb = malloc(H * sizeof(RGB *));
     for (int i = 0; i < H; i++) {
-        img.rgb[i] = malloc(W * sizeof(RGB) + (W * 3) % 4);
-        fread(img.rgb[i], 1, W * sizeof(RGB) + (W * 3) % 4, f);
+        img.rgb[i] = malloc(W * sizeof(RGB) + (4-(W*sizeof(RGB))%4)%4);
+        fread(img.rgb[i], 1, W * sizeof(RGB) + (4-(W*sizeof(RGB))%4)%4, f);
     }
     return img;
 }
@@ -105,9 +107,44 @@ void printFileInfo(image *img) {
 // Command Line Interface
 
 void help_output() {
+    char info[] = "Hey, currently u're working with BMP Photo Editor 'Time for Edit'.\n"
+                  "Here u can see a description of this program: it supports files of only 3rd version; "
+                  "encoding depth is 24 bits per color; file shouldn't be compressed.\n";
+    puts(info);
 }
 
-int main() {
+int main(int argc, char *argv[]) {
+    // TODO: дописать ключи
+    char *opts = "hi:"; //если без аргументов, то без двоеточия
+    struct option longOpts[] = {{"help", no_argument, NULL, 'h'},
+                                {"info", required_argument, NULL, 'i'},
+                                {NULL, 0, NULL}};
+    int opt;
+    int longOpt;
+    opt = getopt_long(argc, argv, opts, longOpts, &longOpt);
+    image img;
 
+    char inputFile[length_file];
+    char outputFile[length_file];
+
+    while (opt != -1){
+        switch (opt) {
+            case 'h':{
+                help_output();
+                return 0;
+            }
+            case 'i':{
+                sscanf(optarg, "%s", inputFile);
+                img = readImage(inputFile);
+                printFileInfo(&img);
+                return 0;
+            }
+            default:{
+                printf("Wrong key");
+                return 1;
+            }
+        }
+        opt = getopt_long(argc, argv, opts, longOpts, &longOpt);
+    }
     return 0;
 }
