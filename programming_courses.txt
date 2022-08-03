@@ -1,8 +1,3 @@
-Сайт с курсами моей кафедры: http://e.moevm.info
-
 Курс по проге за 1 семестр: http://e.moevm.info/course/view.php?id=8
 
 Курс по проге за 2 семестр: http://e.moevm.info/course/view.php?id=18
-
-Логин: rymarmary
-Пароль: Rym12345*
