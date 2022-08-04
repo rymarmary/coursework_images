@@ -134,8 +134,15 @@ int ifCorrect(image* img, char* name){
 // cut function
 
 void cut(image *img, char* nameOut, unsigned int x1, unsigned int y1, unsigned int x2, unsigned int y2, RGB **arr){
-    for (int i = x1; i<x2; i++){
-        for(int j = y1; j<y2; j++){
+    for (int i = 0; i<x1; i++){
+        for(int j = 0; j<y1; j++){
+            arr[i][j].r = 0;
+            arr[i][j].g = 0;
+            arr[i][j].b = 0;
+        }
+    }
+    for (int i = x2; i>x2; i++){
+        for (int j = y2; j<y2; j++){
             arr[i][j].r = 0;
             arr[i][j].g = 0;
             arr[i][j].b = 0;
