@@ -131,6 +131,19 @@ int ifCorrect(image* img, char* name){
     return 0;
 }
 
+// cut function
+
+void cut(image *img, char* nameOut, unsigned int x1, unsigned int y1, unsigned int x2, unsigned int y2, RGB **arr){
+    for (int i = x1; i<x2; i++){
+        for(int j = y1; j<y2; j++){
+            arr[i][j].r = 0;
+            arr[i][j].g = 0;
+            arr[i][j].b = 0;
+        }
+    }
+    saveImage(img, nameOut);
+}
+
 // Command Line Interface
 
 void help_output() {
@@ -138,16 +151,21 @@ void help_output() {
     char info[] = "Hey, currently u're working with BMP Photo Editor 'Time for Edit'.\n"
                   "Here u can see a description of this program: it supports files of only 3rd version; "
                   "encoding depth is 24 bits per color; file shouldn't be compressed.\n"
-                  "Functions:\n1). -i -- if u wanna see an information about bmp-file\n"
-                  "2). -h -- if u need to find out what this program can do (btw, u're reading it now)\n";
+                  "Functions:\n1). -i -- if u want to see an information about bmp-file\n"
+                  "2). -h -- if u need to find out what this program can do (btw, u're reading it now)\n"
+                  "3). -c -- if u want to cut file\n4). -s -- if u want to draw a segment\n"
+                  "5). -n -- if u want to invert colors in a circle";
     puts(info);
 }
 
 int main(int argc, char *argv[]) {
     // TODO: дописать ключи
-    char *opts = "hi:"; //если без аргументов, то без двоеточия
+    char *opts = "hi:c:s:n:"; //если без аргументов, то без двоеточия
     struct option longOpts[] = {{"help", no_argument, NULL, 'h'},
                                 {"info", required_argument, NULL, 'i'},
+                                {"cut", required_argument, NULL, 'c'},
+                                {"segment", required_argument, NULL, 's'},
+                                {"negate", required_argument, NULL, 'n'},
                                 {NULL, 0, NULL}};
     int opt;
     int longOpt;
