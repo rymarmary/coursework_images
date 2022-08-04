@@ -45,7 +45,7 @@ typedef struct {
 #pragma pack(pop)
 
 image readImage(char *name) {
-    FILE *f = fopen("korgi.bmp", "rb");
+    FILE *f = fopen(name, "rb");
     image img;
     fread(&img.bmfh, 1, sizeof(BitmapFileHeader), f);
     fread(&img.bmih, 1, sizeof(BitmapInfoHeader), f);
@@ -53,7 +53,7 @@ image readImage(char *name) {
     unsigned int H = img.bmih.height;
     unsigned int W = img.bmih.width;
 
-    img.rgb = malloc(H * sizeof(RGB *));
+    img.rgb = malloc(H * sizeof(RGB *)+(4-(H*sizeof(RGB))%4)%4);
     for (int i = 0; i < H; i++) {
         img.rgb[i] = malloc(W * sizeof(RGB) + (4-(W*sizeof(RGB))%4)%4);
         fread(img.rgb[i], 1, W * sizeof(RGB) + (4-(W*sizeof(RGB))%4)%4, f);
@@ -133,22 +133,24 @@ int ifCorrect(image* img, char* name){
 
 // cut function
 
-void cut(image *img, char* nameOut, unsigned int x1, unsigned int y1, unsigned int x2, unsigned int y2, RGB **arr){
-    for (int i = 0; i<x1; i++){
-        for(int j = 0; j<y1; j++){
-            arr[i][j].r = 0;
-            arr[i][j].g = 0;
-            arr[i][j].b = 0;
+void cut(image *img, char* nameOut, unsigned int x1, unsigned int y1, unsigned int x2, unsigned int y2){
+    image newImage;
+    newImage.bmfh = img->bmfh;
+    newImage.bmih = img->bmih;
+    int W = x2-x1+1;
+    int H = y2-y1+1;
+    newImage.bmih.height = H;
+    newImage.bmih.width = W;
+    newImage.rgb = malloc(H*sizeof(RGB*));
+    for (int i=0; i<H; i++){
+        newImage.rgb[i] = malloc(W*sizeof(RGB)+(4-(W*sizeof(RGB))%4)%4);
+    }
+    for (int i=0; i<H; i++){
+        for (int j=0; j<W; j++){
+            newImage.rgb[i][j] = img->rgb[i+y1][j+x1];
         }
     }
-    for (int i = x2; i>x2; i++){
-        for (int j = y2; j<y2; j++){
-            arr[i][j].r = 0;
-            arr[i][j].g = 0;
-            arr[i][j].b = 0;
-        }
-    }
-    saveImage(img, nameOut);
+    saveImage(&newImage, nameOut);
 }
 
 // Command Line Interface
@@ -167,17 +169,23 @@ void help_output() {
 
 int main(int argc, char *argv[]) {
     // TODO: дописать ключи
-    char *opts = "hi:c:s:n:"; //если без аргументов, то без двоеточия
+    char *opts = "hi:c:x:s:n:o:"; //если без аргументов, то без двоеточия
     struct option longOpts[] = {{"help", no_argument, NULL, 'h'},
                                 {"info", required_argument, NULL, 'i'},
                                 {"cut", required_argument, NULL, 'c'},
                                 {"segment", required_argument, NULL, 's'},
                                 {"negate", required_argument, NULL, 'n'},
+                                {"outputFile", required_argument, NULL, 'o'},
+                                {"coordinates", required_argument, NULL, 'x'},
                                 {NULL, 0, NULL}};
     int opt;
     int longOpt;
     opt = getopt_long(argc, argv, opts, longOpts, &longOpt);
     image img;
+
+    int numArgs;
+    int x1Coordinate=0, y1Coordinate=0, x2Coordinate=0, y2Coordinate=0;
+    int funcName=0;
 
     if (argc<2){
         printf("Wrong input, please enter keys to use the program.\n");
@@ -204,12 +212,48 @@ int main(int argc, char *argv[]) {
                 printFileInfo(&img);
                 return 0;
             }
+            case 'c':{
+                numArgs = sscanf(optarg, "%s", inputFile);
+                if (numArgs<1){
+                    printf("Too few arguments.\n");
+                    return 1;
+                }
+                if (ifCorrect(&img, inputFile) != 0){
+                    printf("Incorrect input file, please try another.\n");
+                    return 1;
+                }
+                funcName = 1;
+                break;
+            }
+            case 'x':{
+                numArgs = sscanf(optarg, "%d,%d,%d,%d", &x1Coordinate, &y1Coordinate, &x2Coordinate, &y2Coordinate);
+                if (numArgs<4){
+                    printf("Too few arguments for coordinates.\n");
+                    return 1;
+                }
+                break;
+            }
+            case 'o':{
+                sscanf(optarg, "%s", outputFile);
+                break;
+            }
             default:{
                 printf("Wrong key\n");
                 return 1;
             }
         }
         opt = getopt_long(argc, argv, opts, longOpts, &longOpt);
+    }
+    switch (funcName){
+        case 1: {
+            printf("%d %d %d %d\n", x1Coordinate, y1Coordinate, x2Coordinate, y2Coordinate);
+            cut(&img, outputFile, x1Coordinate, y1Coordinate, x2Coordinate, y2Coordinate);
+            break;
+        }
+        default:{
+            printf("No function called.\n");
+            break;
+        }
     }
     return 0;
 }
