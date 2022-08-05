@@ -154,18 +154,14 @@ void cut(image *img, char* nameOut, unsigned int x1, unsigned int y1, unsigned i
     saveImage(&newImage, nameOut);
 }
 
-//paint over the circle
+// paint over the circle function
 
 void paintOverTheCircle(image *img, char* nameOut, unsigned int x, unsigned int y, int R){
-//    printf("%d %d %d", x, y, R);
-    unsigned int H = img->bmih.height;
-    unsigned int W = img->bmih.width;
+    // TODO: сделать обработку ошибок
     for (int i=x-R; i<x+R; i++){
         for (int j=y-R; j<y+R; j++){
             int radius = (x-j)*(x-j)+(y-i)*(y-i);
-//            printf("%d\n", radius);
             if (radius<=(R*R)){
-//                printf("+\n");
                 img->rgb[i][j].r = 255 - img->rgb[i][j].r;
                 img->rgb[i][j].g = 255 - img->rgb[i][j].g;
                 img->rgb[i][j].b = 255 - img->rgb[i][j].b;
@@ -175,10 +171,78 @@ void paintOverTheCircle(image *img, char* nameOut, unsigned int x, unsigned int 
     saveImage(img, nameOut);
 }
 
+// draw segment function
+
+int accuracy(double arg1, double arg2, double accur){
+    if (fabs(arg1-arg2) <= accur){
+        return 1;
+    }
+    return 0;
+}
+
+int isLine(double x1, double y1, double x2, double y2, double i, double j, double bold){
+    if (x1 == x2){
+        if ((j >= y1-bold/2 && j <= y2+bold/2) || (j >= y2-bold/2 && j<= y2+bold/2)){
+            if (accuracy(x1, i, 0.5*bold)){
+                return 1;
+            }
+        }
+    }
+    double deltaX = x1 - x2;
+    double deltaY = y1 - y2;
+    double k = deltaY/deltaX;
+    double b = (y1+y2-k*x1-k*x2) / 2;
+    if (x1 < x2-bold/2 && x2 <= x1 && y2 >= y1){
+        if (i >= x2 - bold / 2 && i <= x1 + bold / 2 && j >= y1 - bold / 2 && j <= y2 + bold / 2) {
+            if (accuracy(j, k * i + b, 0.5 * bold))
+                return 1;
+            if (accuracy(i, (j - b) / k, 0.5 * bold))
+                return 1;
+        }
+        if (i >= x1 - bold / 2 && j <= x2 + bold / 2 && j >= y2 - bold / 2 && j <= y1 + bold / 2) {
+            if (accuracy(j, k * i + b, 0.5 * bold))
+                return 1;
+            if (accuracy(i, (j - b) / k, 0.5 * bold))
+                return 1;
+        }
+    }
+    if (x2 <= x1 && y2 <= y1 || x1 <= x2 && y1 <= y2) {
+        if (i >= x2 - bold / 2 && i <= x1 + bold / 2 && j >= y2 - bold / 2 && j <= y1 + bold / 2) {
+            if (accuracy(j, k * i + b, 0.5 * bold))
+                return 1;
+            if (accuracy(i, (j - b) / k, 0.5 * bold))
+                return 1;
+        }
+        if (i >= x1 - bold / 2 && i <= x2 + bold / 2 && j >= y1 - bold / 2 && j <= y2 + bold / 2) {
+            if (accuracy(j, k * i + b, 0.5 * bold))
+                return 1;
+            if (accuracy(i, (j - b) / k, 0.5 * bold))
+                return 1;
+        }
+    }
+    return 0;
+}
+
+void drawSegment(image *img, char* nameOut, unsigned int x1, unsigned int y1, unsigned int x2,
+                 unsigned int y2, int color1, int color2, int color3, int bold){
+    int H = img->bmih.height;
+    int W = img->bmih.width;
+    for (int i=0; i<H; ++i){
+        for (int j=0; j<W; ++j){
+            if (isLine(x1, y1, x2, y2, j, i, bold)){
+                img->rgb[H-i-1][j].r = color1;
+                img->rgb[H-i-1][j].g = color2;
+                img->rgb[H-i-1][j].b = color3;
+            }
+        }
+    }
+    saveImage(img, nameOut);
+}
+
 // Command Line Interface
 
 void help_output() {
-    // TODO: дописать помощь по программе
+    // TODO: дописать помощь по программе (все ключи с примерами)
     char info[] = "Hey, currently u're working with BMP Photo Editor 'Time for Edit'.\n"
                   "Here u can see a description of this program: it supports files of only 3rd version; "
                   "encoding depth is 24 bits per color; file shouldn't be compressed.\n"
@@ -191,15 +255,16 @@ void help_output() {
 
 int main(int argc, char *argv[]) {
     // TODO: дописать ключи
-    char *opts = "hi:c:x:s:n:o:p:"; //если без аргументов, то без двоеточия
+    char *opts = "hi:c:x:s:n:o:p:q:"; //если без аргументов, то без двоеточия
     struct option longOpts[] = {{"help", no_argument, NULL, 'h'},
                                 {"info", required_argument, NULL, 'i'},
                                 {"cut", required_argument, NULL, 'c'},
                                 {"segment", required_argument, NULL, 's'},
                                 {"negate", required_argument, NULL, 'n'},
                                 {"outputFile", required_argument, NULL, 'o'},
-                                {"coordinates", required_argument, NULL, 'x'},
-                                {"xy", required_argument, NULL, 'p'},
+                                {"coordinatesCut", required_argument, NULL, 'x'},
+                                {"coordinatesCircle", required_argument, NULL, 'p'},
+                                {"coordinatesSegment", required_argument, NULL, 'q'},
                                 {NULL, 0, NULL}};
     int opt;
     int longOpt;
@@ -208,6 +273,7 @@ int main(int argc, char *argv[]) {
 
     int numArgs;
     int x1Coordinate=0, y1Coordinate=0, x2Coordinate=0, y2Coordinate=0;
+    int color1=0, color2=0, color3=0, bold=0;
     int radius=-1;
     int funcName=0;
 
@@ -220,6 +286,7 @@ int main(int argc, char *argv[]) {
     char inputFile[length_file];
     char outputFile[length_file];
 
+    //TODO: уменьшить число ключей
     while (opt != -1){
         switch (opt) {
             case 'h':{
@@ -278,6 +345,28 @@ int main(int argc, char *argv[]) {
                 }
                 break;
             }
+            case 's':{
+                numArgs = sscanf(optarg, "%s", inputFile);
+                if (numArgs<1){
+                    printf("Too few arguments.\n");
+                    return 1;
+                }
+                if (ifCorrect(&img, inputFile) != 0){
+                    printf("Incorrect input file, please try another.\n");
+                    return 1;
+                }
+                funcName = 3;
+                break;
+            }
+            case 'q':{
+                numArgs = sscanf(optarg, "%d,%d,%d,%d,%d,%d,%d,%d", &x1Coordinate, &y1Coordinate, &x2Coordinate,
+                                 &y2Coordinate, &color1, &color2, &color3, &bold);
+                if (numArgs<8){
+                    printf("Too few arguments for coordinates.\n");
+                    return 1;
+                }
+                break;
+            }
             case 'o':{
                 sscanf(optarg, "%s", outputFile);
                 break;
@@ -295,12 +384,17 @@ int main(int argc, char *argv[]) {
             break;
         }
         case 2:{
-            if (radius==-1) {
-                radius = abs((x2Coordinate - x1Coordinate) / 2);
-                x1Coordinate = (x2Coordinate + x1Coordinate) / 2;
-                x2Coordinate = (y2Coordinate + y1Coordinate) / 2;
-            }
+//            if (radius==-1) {
+//                radius = abs((x2Coordinate - x1Coordinate) / 2);
+//                x1Coordinate = (x2Coordinate + x1Coordinate) / 2;
+//                x2Coordinate = (y2Coordinate + y1Coordinate) / 2;
+//            }
             paintOverTheCircle(&img, outputFile, x1Coordinate, y1Coordinate, radius);
+            break;
+        }
+        case 3:{
+            drawSegment(&img, outputFile, x1Coordinate, y1Coordinate, x2Coordinate, y2Coordinate,
+                        color1, color2, color3, bold);
             break;
         }
         default:{
