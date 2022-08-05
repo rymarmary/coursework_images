@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #define length_file 256
 
@@ -153,6 +154,27 @@ void cut(image *img, char* nameOut, unsigned int x1, unsigned int y1, unsigned i
     saveImage(&newImage, nameOut);
 }
 
+//paint over the circle
+
+void paintOverTheCircle(image *img, char* nameOut, unsigned int x, unsigned int y, int R){
+//    printf("%d %d %d", x, y, R);
+    unsigned int H = img->bmih.height;
+    unsigned int W = img->bmih.width;
+    for (int i=x-R; i<x+R; i++){
+        for (int j=y-R; j<y+R; j++){
+            int radius = (x-j)*(x-j)+(y-i)*(y-i);
+//            printf("%d\n", radius);
+            if (radius<=(R*R)){
+//                printf("+\n");
+                img->rgb[i][j].r = 255 - img->rgb[i][j].r;
+                img->rgb[i][j].g = 255 - img->rgb[i][j].g;
+                img->rgb[i][j].b = 255 - img->rgb[i][j].b;
+            }
+        }
+    }
+    saveImage(img, nameOut);
+}
+
 // Command Line Interface
 
 void help_output() {
@@ -169,7 +191,7 @@ void help_output() {
 
 int main(int argc, char *argv[]) {
     // TODO: дописать ключи
-    char *opts = "hi:c:x:s:n:o:"; //если без аргументов, то без двоеточия
+    char *opts = "hi:c:x:s:n:o:p:"; //если без аргументов, то без двоеточия
     struct option longOpts[] = {{"help", no_argument, NULL, 'h'},
                                 {"info", required_argument, NULL, 'i'},
                                 {"cut", required_argument, NULL, 'c'},
@@ -177,6 +199,7 @@ int main(int argc, char *argv[]) {
                                 {"negate", required_argument, NULL, 'n'},
                                 {"outputFile", required_argument, NULL, 'o'},
                                 {"coordinates", required_argument, NULL, 'x'},
+                                {"xy", required_argument, NULL, 'p'},
                                 {NULL, 0, NULL}};
     int opt;
     int longOpt;
@@ -185,6 +208,7 @@ int main(int argc, char *argv[]) {
 
     int numArgs;
     int x1Coordinate=0, y1Coordinate=0, x2Coordinate=0, y2Coordinate=0;
+    int radius=-1;
     int funcName=0;
 
     if (argc<2){
@@ -233,6 +257,27 @@ int main(int argc, char *argv[]) {
                 }
                 break;
             }
+            case 'n':{
+                numArgs = sscanf(optarg, "%s", inputFile);
+                if (numArgs<1){
+                    printf("Too few arguments.\n");
+                    return 1;
+                }
+                if (ifCorrect(&img, inputFile) != 0){
+                    printf("Incorrect input file, please try another.\n");
+                    return 1;
+                }
+                funcName = 2;
+                break;
+            }
+            case 'p':{
+                numArgs = sscanf(optarg, "%d,%d,%d", &x1Coordinate, &y1Coordinate, &radius);
+                if (numArgs<3){
+                    printf("Too few arguments for coordinates.\n");
+                    return 1;
+                }
+                break;
+            }
             case 'o':{
                 sscanf(optarg, "%s", outputFile);
                 break;
@@ -246,8 +291,16 @@ int main(int argc, char *argv[]) {
     }
     switch (funcName){
         case 1: {
-            printf("%d %d %d %d\n", x1Coordinate, y1Coordinate, x2Coordinate, y2Coordinate);
             cut(&img, outputFile, x1Coordinate, y1Coordinate, x2Coordinate, y2Coordinate);
+            break;
+        }
+        case 2:{
+            if (radius==-1) {
+                radius = abs((x2Coordinate - x1Coordinate) / 2);
+                x1Coordinate = (x2Coordinate + x1Coordinate) / 2;
+                x2Coordinate = (y2Coordinate + y1Coordinate) / 2;
+            }
+            paintOverTheCircle(&img, outputFile, x1Coordinate, y1Coordinate, radius);
             break;
         }
         default:{
