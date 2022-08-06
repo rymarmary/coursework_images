@@ -81,8 +81,7 @@ void saveImage(image *img, char *outName) {
         fwrite(img->rgb[i], 1, w, f);
         free(img->rgb[i]);
     }
-    // TODO можно отладить - корректно ли сохраняется файл
-    printf("saved to %s\n", outName);
+    printf("The processed file is saved to %s\n", outName);
     fclose(f);
 }
 
@@ -133,7 +132,7 @@ int ifCorrect(image* img, char* name){
 }
 
 // cut function
-
+// TODO: сделать обработку ошибок
 void cut(image *img, char* nameOut, unsigned int x1, unsigned int y1, unsigned int x2, unsigned int y2){
     image newImage;
     newImage.bmfh = img->bmfh;
@@ -155,9 +154,8 @@ void cut(image *img, char* nameOut, unsigned int x1, unsigned int y1, unsigned i
 }
 
 // paint over the circle function
-
+// TODO: сделать обработку ошибок
 void paintOverTheCircle(image *img, char* nameOut, unsigned int x, unsigned int y, int R){
-    // TODO: сделать обработку ошибок
     for (int i=x-R; i<x+R; i++){
         for (int j=y-R; j<y+R; j++){
             int radius = (x-j)*(x-j)+(y-i)*(y-i);
@@ -172,7 +170,7 @@ void paintOverTheCircle(image *img, char* nameOut, unsigned int x, unsigned int 
 }
 
 // draw segment function
-
+// TODO: сделать обработку ошибок
 int accuracy(double arg1, double arg2, double accur){
     if (fabs(arg1-arg2) <= accur){
         return 1;
@@ -242,35 +240,42 @@ void drawSegment(image *img, char* nameOut, unsigned int x1, unsigned int y1, un
 // Command Line Interface
 
 void help_output() {
-    // TODO: дописать помощь по программе (все ключи с примерами)
     char info[] = "Hey, currently u're working with BMP Photo Editor 'Time for Edit'.\n"
                   "Here u can see a description of this program: it supports files of only 3rd version; "
                   "encoding depth is 24 bits per color; file shouldn't be compressed.\n"
                   "Functions:\n1). -i -- if u want to see an information about bmp-file\n"
                   "2). -h -- if u need to find out what this program can do (btw, u're reading it now)\n"
-                  "3). -c -- if u want to cut file\n4). -s -- if u want to draw a segment\n"
-                  "5). -n -- if u want to invert colors in a circle";
+                  "3). -c -- if u want to cut file: eg, ./main -c korgi.bmp -o out.bmp -t 200,200,800,800\n"
+                  "4). -n -- if u want to invert colors in a circle: eg, ./main -n korgi.bmp -o out.bmp -p 500,500 -r 30\n"
+                  "5). -s -- if u want to draw a segment: eg, ./main -s korgi.bmp -o out.bmp -t 200,200,500,500 -b 0,185,0,30\n"
+                  "Additional keys:\na). -o -- name of file, where u want to save a processed picture\n"
+                  "b). -t -- two pairs of arguments, every number is divided from another by comma\n"
+                  "c). -p -- one pair of arguments, every number is divided from another by comma\n"
+                  "d). -r -- radius of the Circle u want to invert colors in\n"
+                  "e). -b -- here u should enter 3 numbers of rgb color palette and bold of the segment, all numbers are divided by comma\n"
+                  "Thanks for using 'Time for edit'.";
     puts(info);
 }
 
 int main(int argc, char *argv[]) {
-    // TODO: дописать ключи
-    char *opts = "hi:c:x:s:n:o:p:q:"; //если без аргументов, то без двоеточия
+    char *opts = "hi:c:t:s:n:o:p:b:r:"; //если без аргументов, то без двоеточия
     struct option longOpts[] = {{"help", no_argument, NULL, 'h'},
                                 {"info", required_argument, NULL, 'i'},
                                 {"cut", required_argument, NULL, 'c'},
                                 {"segment", required_argument, NULL, 's'},
                                 {"negate", required_argument, NULL, 'n'},
                                 {"outputFile", required_argument, NULL, 'o'},
-                                {"coordinatesCut", required_argument, NULL, 'x'},
-                                {"coordinatesCircle", required_argument, NULL, 'p'},
-                                {"coordinatesSegment", required_argument, NULL, 'q'},
+                                {"twoPairOfCoordinates", required_argument, NULL, 't'},
+                                {"onePairOfCoordinates", required_argument, NULL, 'p'},
+                                {"radiusCircle", required_argument, NULL, 'r'},
+                                {"colorsBold", required_argument, NULL, 'b'},
                                 {NULL, 0, NULL}};
     int opt;
     int longOpt;
     opt = getopt_long(argc, argv, opts, longOpts, &longOpt);
     image img;
-
+    char inputFile[length_file];
+    char outputFile[length_file];
     int numArgs;
     int x1Coordinate=0, y1Coordinate=0, x2Coordinate=0, y2Coordinate=0;
     int color1=0, color2=0, color3=0, bold=0;
@@ -283,10 +288,6 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    char inputFile[length_file];
-    char outputFile[length_file];
-
-    //TODO: уменьшить число ключей
     while (opt != -1){
         switch (opt) {
             case 'h':{
@@ -316,14 +317,6 @@ int main(int argc, char *argv[]) {
                 funcName = 1;
                 break;
             }
-            case 'x':{
-                numArgs = sscanf(optarg, "%d,%d,%d,%d", &x1Coordinate, &y1Coordinate, &x2Coordinate, &y2Coordinate);
-                if (numArgs<4){
-                    printf("Too few arguments for coordinates.\n");
-                    return 1;
-                }
-                break;
-            }
             case 'n':{
                 numArgs = sscanf(optarg, "%s", inputFile);
                 if (numArgs<1){
@@ -335,14 +328,6 @@ int main(int argc, char *argv[]) {
                     return 1;
                 }
                 funcName = 2;
-                break;
-            }
-            case 'p':{
-                numArgs = sscanf(optarg, "%d,%d,%d", &x1Coordinate, &y1Coordinate, &radius);
-                if (numArgs<3){
-                    printf("Too few arguments for coordinates.\n");
-                    return 1;
-                }
                 break;
             }
             case 's':{
@@ -358,11 +343,34 @@ int main(int argc, char *argv[]) {
                 funcName = 3;
                 break;
             }
-            case 'q':{
-                numArgs = sscanf(optarg, "%d,%d,%d,%d,%d,%d,%d,%d", &x1Coordinate, &y1Coordinate, &x2Coordinate,
-                                 &y2Coordinate, &color1, &color2, &color3, &bold);
-                if (numArgs<8){
-                    printf("Too few arguments for coordinates.\n");
+            case 't':{
+                numArgs = sscanf(optarg, "%d,%d,%d,%d", &x1Coordinate, &y1Coordinate, &x2Coordinate, &y2Coordinate);
+                if (numArgs<4){
+                    printf("Too few arguments for two pair of coordinates.\n");
+                    return 1;
+                }
+                break;
+            }
+            case 'p':{
+                numArgs = sscanf(optarg, "%d,%d", &x1Coordinate, &x2Coordinate);
+                if (numArgs<2){
+                    printf("Too few arguments for one pair of coordinates.\n");
+                    return 1;
+                }
+                break;
+            }
+            case 'r':{
+                numArgs = sscanf(optarg, "%d", &radius);
+                if (numArgs<1){
+                    printf("You haven't entered radius.\n");
+                    return 1;
+                }
+                break;
+            }
+            case 'b':{
+                numArgs = sscanf(optarg, "%d,%d,%d,%d", &color1, &color2, &color3, &bold);
+                if (numArgs<4){
+                    printf("Too few arguments for colors and bold. There should be 3 arguments for colors and 1 for bold.\n");
                     return 1;
                 }
                 break;
@@ -383,18 +391,18 @@ int main(int argc, char *argv[]) {
             cut(&img, outputFile, x1Coordinate, y1Coordinate, x2Coordinate, y2Coordinate);
             break;
         }
+        //TODO: посмотреть, почему не обрабатывается именно эта функция после смены ключей
         case 2:{
-//            if (radius==-1) {
-//                radius = abs((x2Coordinate - x1Coordinate) / 2);
-//                x1Coordinate = (x2Coordinate + x1Coordinate) / 2;
-//                x2Coordinate = (y2Coordinate + y1Coordinate) / 2;
-//            }
+            if (radius==-1) {
+                radius = abs((x2Coordinate - x1Coordinate) / 2);
+                x1Coordinate = (x2Coordinate + x1Coordinate) / 2;
+                x2Coordinate = (y2Coordinate + y1Coordinate) / 2;
+            }
             paintOverTheCircle(&img, outputFile, x1Coordinate, y1Coordinate, radius);
             break;
         }
         case 3:{
-            drawSegment(&img, outputFile, x1Coordinate, y1Coordinate, x2Coordinate, y2Coordinate,
-                        color1, color2, color3, bold);
+            drawSegment(&img, outputFile, x1Coordinate, y1Coordinate, x2Coordinate, y2Coordinate, color1, color2, color3, bold);
             break;
         }
         default:{
