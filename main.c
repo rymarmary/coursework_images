@@ -352,7 +352,7 @@ int main(int argc, char *argv[]) {
                 break;
             }
             case 'p':{
-                numArgs = sscanf(optarg, "%d,%d", &x1Coordinate, &x2Coordinate);
+                numArgs = sscanf(optarg, "%d,%d", &x1Coordinate, &y1Coordinate);
                 if (numArgs<2){
                     printf("Too few arguments for one pair of coordinates.\n");
                     return 1;
@@ -391,7 +391,6 @@ int main(int argc, char *argv[]) {
             cut(&img, outputFile, x1Coordinate, y1Coordinate, x2Coordinate, y2Coordinate);
             break;
         }
-        //TODO: посмотреть, почему не обрабатывается именно эта функция после смены ключей
         case 2:{
             if (radius==-1) {
                 radius = abs((x2Coordinate - x1Coordinate) / 2);
