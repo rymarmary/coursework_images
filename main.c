@@ -161,8 +161,15 @@ void cut(image *img, char* nameOut, unsigned int x1, unsigned int y1, unsigned i
 }
 
 // paint over the circle function
-// TODO: сделать обработку ошибок
 void paintOverTheCircle(image *img, char* nameOut, unsigned int x, unsigned int y, int R){
+    if (x>img->bmih.height || y>img->bmih.width || x<1 || y<1){
+        printf("Error: enetered arguments of coordinates are incorrect.\n");
+        return;
+    };
+    if (x+R>img->bmih.height || y+R>img->bmih.width || x-R>0 || y-R>0){
+        printf("Error: enetered argument of radius is incorrect.\n");
+        return;
+    };
     for (int i=x-R; i<x+R; i++){
         for (int j=y-R; j<y+R; j++){
             int radius = (x-j)*(x-j)+(y-i)*(y-i);
