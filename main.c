@@ -132,8 +132,15 @@ int ifCorrect(image* img, char* name){
 }
 
 // cut function
-// TODO: сделать обработку ошибок
 void cut(image *img, char* nameOut, unsigned int x1, unsigned int y1, unsigned int x2, unsigned int y2){
+    if (x2<x1 || y2<y1){
+        printf("Error: invailid arguments. There should be x2>x1 and y2>y1.\n");
+        return;
+    }
+    if (x1>img->bmih.height || x2>img->bmih.height || y1>img->bmih.width || y2>img->bmih.width || x1<1 || x2<1 || y1<1 || y2<1){
+        printf("Error: enetered arguments are incorrect.\n");
+        return;
+    };
     image newImage;
     newImage.bmfh = img->bmfh;
     newImage.bmih = img->bmih;
