@@ -166,7 +166,7 @@ void paintOverTheCircle(image *img, char* nameOut, unsigned int x, unsigned int 
         printf("Error: enetered arguments of coordinates are incorrect.\n");
         return;
     };
-    if (x+R>img->bmih.height || y+R>img->bmih.width || x-R>0 || y-R>0){
+    if (x+R>img->bmih.height || y+R>img->bmih.width || x-R<0 || y-R<0){
         printf("Error: enetered argument of radius is incorrect.\n");
         return;
     };
@@ -259,9 +259,9 @@ void help_output() {
                   "encoding depth is 24 bits per color; file shouldn't be compressed.\n"
                   "Functions:\n1). -i -- if u want to see an information about bmp-file\n"
                   "2). -h -- if u need to find out what this program can do (btw, u're reading it now)\n"
-                  "3). -c -- if u want to cut file: eg, ./main -c korgi.bmp -o out.bmp -t 200,200,800,800\n"
-                  "4). -n -- if u want to invert colors in a circle: eg, ./main -n korgi.bmp -o out.bmp -p 500,500 -r 30\n"
-                  "5). -s -- if u want to draw a segment: eg, ./main -s korgi.bmp -o out.bmp -t 200,200,500,500 -b 0,185,0,30\n"
+                  "3). -c -- if u want to cut file: eg, ./src -c korgi.bmp -o out.bmp -t 200,200,800,800\n"
+                  "4). -n -- if u want to invert colors in a circle: eg, ./src -n korgi.bmp -o out.bmp -p 500,500 -r 30\n"
+                  "5). -s -- if u want to draw a segment: eg, ./src -s korgi.bmp -o out.bmp -t 200,200,500,500 -b 0,185,0,30\n"
                   "Additional keys:\na). -o -- name of file, where u want to save a processed picture\n"
                   "b). -t -- two pairs of arguments, every number is divided from another by comma\n"
                   "c). -p -- one pair of arguments, every number is divided from another by comma\n"
