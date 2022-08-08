@@ -184,7 +184,6 @@ void paintOverTheCircle(image *img, char* nameOut, unsigned int x, unsigned int 
 }
 
 // draw segment function
-// TODO: сделать обработку ошибок
 int accuracy(double arg1, double arg2, double accur){
     if (fabs(arg1-arg2) <= accur){
         return 1;
@@ -237,6 +236,26 @@ int isLine(double x1, double y1, double x2, double y2, double i, double j, doubl
 
 void drawSegment(image *img, char* nameOut, unsigned int x1, unsigned int y1, unsigned int x2,
                  unsigned int y2, int color1, int color2, int color3, int bold){
+    if (x1>img->bmih.height || x2>img->bmih.height || y1>img->bmih.width || y2>img->bmih.width || x1<1 || y1<1 || x2<1 || y2<1){
+        printf("Error: enetered arguments of coordinates are incorrect.\n");
+        return;
+    };
+    if (color1>255 || color1<0){
+        printf("Error: enetered argument of the 1st color is incorrect.\n");
+        return;
+    }
+    if (color2>255 || color2<0){
+        printf("Error: enetered argument of the 2nd color is incorrect.\n");
+        return;
+    }
+    if (color3>255 || color3<0){
+        printf("Error: enetered argument of the 3rd color is incorrect.\n");
+        return;
+    }
+    if (bold<0 || bold>img->bmih.width || bold>img->bmih.height){
+        printf("Error: entered argument of bold is incorrect.\n");
+        return;
+    }
     int H = img->bmih.height;
     int W = img->bmih.width;
     for (int i=0; i<H; ++i){
