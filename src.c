@@ -252,7 +252,7 @@ void drawSegment(image *img, char* nameOut, unsigned int x1, unsigned int y1, un
         printf("Error: enetered argument of the 3rd color is incorrect.\n");
         return;
     }
-    if (bold<0 || bold>img->bmih.width || bold>img->bmih.height){
+    if (bold<1 || bold>img->bmih.width || bold>img->bmih.height){
         printf("Error: entered argument of bold is incorrect.\n");
         return;
     }
