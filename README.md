@@ -1,5 +1,4 @@
 # coursework_images
-Вариант 6
 
 Программа должна иметь CLI или GUI. Более подробно тут: http://se.moevm.info/doku.php/courses:programming:rules_extra_kurs
 
